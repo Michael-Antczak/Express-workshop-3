@@ -4,6 +4,12 @@ const exphbs  = require('express-handlebars');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 
+// Load the SDK for JavaScript
+var AWS = require('aws-sdk');
+
+// Load credentials and set region from JSON file
+AWS.config.loadFromPath('./config.json');
+
 // Then these two lines after you initialise your express app 
 app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
@@ -16,20 +22,31 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public", {'extensions': ['html']}));
 
 app.get('/', function (req, res) {
-    const filePath = __dirname + '/data/posts.json';
-    const callbackFunction = function(error, file) {
-        // we call .toString() to turn the file buffer to a String
-        const fileData = file.toString();
-        // we use JSON.parse to get an object out the String
-        const postsJson = JSON.parse(fileData);
-        // send the json to the Template to render
-        res.render('index', {
-          title: "Michael's profile",
-          subheading: "A modern Website built in Node with Handlebars",
-          posts: postsJson
-        });
+    
+    var docClient = new AWS.DynamoDB.DocumentClient();
+
+    var params = {
+        TableName: "cyf-student-posts",
+        ProjectionExpression: "title, summary, content",
     };
-    fs.readFile(filePath, callbackFunction);
+
+    console.log("Scanning posts table.");
+    docClient.scan(params, onScan);
+
+    function onScan(err, data) {
+        if (err) {
+            console.error("Unable to scan the table. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+
+            console.log("Scan succeeded.");
+
+            res.render('index', {
+                title: "Michael's profile",
+                subheading: "A modern Website built in Node with Handlebars",
+                posts: data.Items
+            });
+        }
+    }
 });
 
 app.get('/api/posts', function (req, res) {
