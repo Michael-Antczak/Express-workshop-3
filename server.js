@@ -78,27 +78,28 @@ app.get('/admin', function (req, res) {
 });
 
 app.post('/admin', function (req, res) {
-    
-    const filePath = __dirname + '/data/posts.json';
 
-    const cb = function(error, file) {
-        // we call .toString() to turn the file buffer to a String
-        const fileData = file.toString();
-        // we use JSON.parse to get an object out the String
-        const postsJson = JSON.parse(fileData);
-        // add new post to the file
-        postsJson.push(req.body);
+    // Create the DynamoDB service object
+    var docClient = new AWS.DynamoDB.DocumentClient();
 
-        // write back to file
-        fs.writeFile(filePath, JSON.stringify(postsJson), (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-        });
-        
-        res.end("Success.");
+    var params = {
+        TableName: 'cyf-student-posts',
+        Item:{
+            'title' : req.body.title,
+            'summary' : req.body.summary,
+            'content' : req.body.contents,
+        }
     };
 
-    fs.readFile(filePath, cb);
+    // Call DynamoDB to add the item to the table
+    console.log("Adding a new item...");
+    docClient.put(params, function(err, data) {
+        if (err) {
+            console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+            console.log("Added item:", JSON.stringify(data, null, 2));
+        }
+    });
 
 });
 

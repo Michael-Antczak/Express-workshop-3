@@ -18,11 +18,13 @@ addPostButton.addEventListener('click', function() {
     var url = '/admin';
     var oReq = new XMLHttpRequest();
     
-    oReq.addEventListener('load', onLoad);
+    // oReq.addEventListener('load', onLoad);
     oReq.open('POST', url);
     //Send the proper header information along with the request
     oReq.setRequestHeader("Content-type", "application/json");
     oReq.send(JSON.stringify(postData));
+    // redirect to main page
+    window.location.href = '/';
 });
 
 function onLoad() {
@@ -30,7 +32,4 @@ function onLoad() {
     document.getElementById("title").value = "";
     document.getElementById("summary").value = "";
     document.getElementById("contents").value = "";
-
-    // redirect to main page
-    window.location.href = '/';
 }
